@@ -24,8 +24,6 @@ pipeline {
                 script {
                     echo 'Running Docker container...'
                     try {
-                        // Introduce an error here to simulate a deployment failure
-                        error("Simulated deployment failure")
                         docker.image("${env.DOCKER_IMAGE}:latest").run("-p 5000:5000")
                     } catch (Exception e) {
                         echo 'Error encountered during deployment: ' + e.message
@@ -55,18 +53,17 @@ def rollback() {
     script {
         echo 'Starting rollback...'
         try {
-            // Introduce an error by using an invalid Docker image name
-            docker.image("${env.DOCKER_IMAGE}:invalid-tag").run("-p 5000:5000")
+            docker.image("${env.DOCKER_IMAGE}:previous").run("-p 5000:5000")
             echo 'Rollback to previous version successful'
         } catch (Exception e) {
             echo 'Rollback failed: ' + e.message
         }
 
-        // Example: Notify team
+        // Notify team
         emailext(
             to: 'r.piasecki.064@studms.ug.edu.pl',
             subject: "Jenkins Rollback Executed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            body: "Deployment failed and rollback has been executed but also failed. Please check the application status."
+            body: "Deployment failed and rollback has been executed. Please check the application status."
         )
     }
 }
