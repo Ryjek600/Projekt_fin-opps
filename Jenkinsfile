@@ -24,6 +24,8 @@ pipeline {
                 script {
                     echo 'Running Docker container...'
                     try {
+                        // Introduce an error here to simulate a deployment failure
+                        error("Simulated deployment failure")
                         docker.image("${env.DOCKER_IMAGE}:latest").run("-p 5000:5000")
                     } catch (Exception e) {
                         echo 'Error encountered during deployment: ' + e.message
