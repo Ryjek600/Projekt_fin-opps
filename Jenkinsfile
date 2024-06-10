@@ -21,7 +21,13 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    docker.image("${env.DOCKER_IMAGE}:latest").run("-p 5000:5000")
+                    try {
+                        docker.image("${env.DOCKER_IMAGE}:latest").run("-p 5000:5000")
+                    } catch (Exception e) {
+                        echo 'Deployment failed - Attempting rollback'
+                        rollback()
+                        throw e
+                    }
                 }
             }
         }
@@ -42,16 +48,15 @@ pipeline {
 
 def rollback() {
     script {
-        // Define your rollback steps here
-        // Example: Rollback to previous Docker image version
         try {
+            // Assuming 'previous' tag is the previous stable version
             docker.image("${env.DOCKER_IMAGE}:previous").run("-p 5000:5000")
             echo 'Rollback to previous version successful'
         } catch (Exception e) {
-            echo 'Rollback failed'
+            echo 'Rollback failed: ' + e.message
         }
 
-        // Example: Notify team
+        // Notify team
         emailext(
             to: 'r.piasecki.064@studms.ug.edu.pl',
             subject: "Jenkins Rollback Executed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
@@ -59,4 +64,3 @@ def rollback() {
         )
     }
 }
-
